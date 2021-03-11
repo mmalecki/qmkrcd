@@ -1,0 +1,10 @@
+{
+  "name": "kbdd",
+  "version": "0.1.0",
+  "author": "Maciej Małecki <me@mmalecki.com>",
+  "dependencies": {
+    "body": "^5.1.0",
+    "node-hid": "^2.1.1",
+    "send-data": "^8.0.0"
+  }
+}

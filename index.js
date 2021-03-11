@@ -1,55 +1,97 @@
+'use strict'
+
+const { commandToBytes } = require('./qmk-rc.js')
 const http = require('http')
 const HID = require('node-hid');
+const jsonBody = require('body/json')
+const sendJson = require('send-data/json')
+
 var devices = HID.devices();
 
-const VENDOR_ID = 0x3297
-const PRODUCT_ID = 0xC6CE
-const USAGE = 0x61
-const USAGE_PAGE = 0xFF60
+const DEFAULT_USAGE = {
+  usage: 0x61,
+  usagePage: 0xFF60
+}
 
-const CHANNEL_BITS = 2
-const PROGRESS_BITS = 6
+const DEVICES = {
+  planck: {
+    vendorId: 0x3297,
+    productId: 0xC6CE,
+  },
+  corne: {
+    vendorId: 18003,
+    productId: 1,
+  }
+}
+
+const target = process.argv[2]
+
+if (target && !DEVICES[target]) {
+  console.log('no such device known')
+  process.exit(3)
+}
 
 const onerror = (err) => {
   console.log(err)
   process.exit(1)
 }
 
+
+const writeCommand = (kbd, command) => {
+  const bytes = commandToBytes(command)
+  kbd.write(bytes)
+  return bytes
+}
+
 const device = devices.find(d =>
-  d.vendorId === VENDOR_ID &&
-  d.productId === PRODUCT_ID &&
-  d.usage === USAGE &&
-  d.usagePage === USAGE_PAGE
+  (target ?
+    (d.vendorId === DEVICES[target].vendorId &&
+    d.productId === DEVICES[target].productId) : true)
+  &&
+    d.usage === DEFAULT_USAGE.usage &&
+    d.usagePage === DEFAULT_USAGE.usagePage
 )
 
 if (!device) {
-  console.error('device not found')
+  console.error('device not found (is the device connected? is raw HID enabled?)')
   console.log(devices)
   process.exit(2)
 }
 
 console.log('device found', device)
+
 const kbd = new HID.HID(device.path)
 kbd.on('error', onerror)
 
 const server = http.createServer((req, res) => {
-  const splitUrl = req.url.split('/').filter(Boolean)
-  if (req.method !== 'POST' || splitUrl.length != 2 || splitUrl[0] !== 'progress') {
+  if (req.method !== 'POST' || req.url !== '/command') {
     res.writeHead(404)
     return res.end()
   }
 
-  const channel = parseInt(splitUrl[1], 10)
-  let buf = ''
-  req.on('readable', () => {
-    const r = req.read()
-    if (r !== null) buf += r
-    else {
-      const cmd = (channel | (parseInt(buf, 10) << CHANNEL_BITS))
-      kbd.write([ 0, cmd ])
-      res.writeHead(200)
-      return res.end()
+  jsonBody(req, res, (err, body) => {
+    if (err) {
+      return sendJson(req, res, {
+        statusCode: 400,
+        body: { message: 'Bad Request' }
+      })
     }
+
+    if (typeof body.id === 'undefined' || !body.data) {
+      return sendJson(req, res, {
+        statusCode: 400,
+        body: { message: '`id` and `data` fields are required' }
+      })
+    }
+
+    const bytesSent = writeCommand(kbd, body)
+    return sendJson(req, res, {
+      statusCode: 200,
+      body: {
+        message: 'Command sent',
+        bytes: bytesSent
+      }
+    })
   })
 })
 server.listen(9916)
