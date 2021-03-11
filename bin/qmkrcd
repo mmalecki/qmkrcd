@@ -1,6 +1,7 @@
+#!/usr/bin/env node
 'use strict'
 
-const { commandToBytes } = require('./qmk-rc.js')
+const { commandToBytes } = require('../qmk-rc.js')
 const http = require('http')
 const HID = require('node-hid');
 const jsonBody = require('body/json')

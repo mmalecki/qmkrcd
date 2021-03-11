@@ -1,10 +1,20 @@
 {
-  "name": "kbdd",
+  "name": "qmkrcd",
   "version": "0.1.0",
   "author": "Maciej Małecki <me@mmalecki.com>",
   "dependencies": {
     "body": "^5.1.0",
     "node-hid": "^2.1.1",
     "send-data": "^8.0.0"
+  },
+  "bin": {
+    "qmkrcd": "bin/qmkrcd"
+  },
+  "scripts": {
+    "start": "./bin/qmkrcd"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mmalecki/qmkrcd.git"
   }
 }
