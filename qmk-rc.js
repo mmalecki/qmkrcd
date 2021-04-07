@@ -1,3 +1,8 @@
+const PACKET_PADDING = 64
+
+const dataToBytes = (data) => typeof data === 'string' ?
+  strToBytes(data) : data;
+
 const strToBytes = (str) => str.split('').map(c => c.charCodeAt(0))
 
 const lengthToBytes = (length) => {
@@ -9,5 +14,11 @@ const lengthToBytes = (length) => {
 
 const commandToBytes = exports.commandToBytes = (command) => {
   const { id, data } = command
-  return [ 0, id, ...lengthToBytes(data.length), ...strToBytes(data) ]
+  const unpadded = [
+    0, id,
+    ...lengthToBytes(data ? data.length : 0),
+    ...(data ? dataToBytes(data) : [])
+  ]
+  const padding = new Array(PACKET_PADDING - unpadded.length).fill(0)
+  return [ ...unpadded, ...padding ]
 }

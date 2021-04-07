@@ -78,10 +78,10 @@ const server = http.createServer((req, res) => {
       })
     }
 
-    if (typeof body.id === 'undefined' || !body.data) {
+    if (typeof body.id === 'undefined') {
       return sendJson(req, res, {
         statusCode: 400,
-        body: { message: '`id` and `data` fields are required' }
+        body: { message: '`id` field is required' }
       })
     }
 
