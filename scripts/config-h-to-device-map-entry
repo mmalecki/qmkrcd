@@ -1,0 +1,31 @@
+#!/usr/bin/env node
+const fs = require('fs')
+
+const file = process.argv[2]
+
+console.log('processing config.h: ' + file)
+
+const config = fs.readFileSync(file, 'utf8').split('\n')
+
+const re = /^#(\s*)define(\s+)([A-Z_]+)(\s+)([0-9A-Za-z]+)/
+const spec = config
+  .map(line => re.exec(line))
+  .filter(Boolean)
+  .filter(define => ['MANUFACTURER', 'PRODUCT', 'VENDOR_ID', 'PRODUCT_ID'].includes(define[3]))
+  .reduce((acc, define) => {
+    acc[define[3]] = define[5]
+    return acc
+  }, {})
+
+if (!(spec.PRODUCT && spec.VENDOR_ID && spec.PRODUCT))
+  console.error(`incomplete spec in ${file}: ${JSON.stringify(spec)}`)
+else
+  fs.writeFileSync(
+    `devices/${[spec.MANUFACTURER, spec.PRODUCT].filter(Boolean).join('-')}.json`,
+    JSON.stringify({
+      MANUFACTURER: spec.MANUFACTURER,
+      PRODUCT: spec.PRODUCT,
+      VENDOR_ID: parseInt(spec.VENDOR_ID),
+      PRODUCT_ID: parseInt(spec.PRODUCT_ID),
+    })
+  )

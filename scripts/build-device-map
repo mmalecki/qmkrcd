@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+QMK_REPO="$1"
+find $QMK_REPO/keyboards -name keymaps -prune -false -o -name 'config.h' -exec ./scripts/config-h-to-device-map-entry '{}' \;

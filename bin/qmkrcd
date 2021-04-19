@@ -6,6 +6,7 @@ const http = require('http')
 const HID = require('node-hid');
 const jsonBody = require('body/json')
 const sendJson = require('send-data/json')
+const DEVICES = require('../devices')
 
 var devices = HID.devices();
 
@@ -14,29 +15,35 @@ const DEFAULT_USAGE = {
   usagePage: 0xFF60
 }
 
-const DEVICES = {
-  planck: {
-    vendorId: 0x3297,
-    productId: 0xC6CE,
-  },
-  corne: {
-    vendorId: 18003,
-    productId: 1,
+const readableDeviceName = (spec) => 
+  [spec.MANUFACTURER, spec.PRODUCT]
+    .filter(Boolean)
+    .join(' ')
+
+const getTargetDevice = (target) => {
+  const targetRe = new RegExp(target.toLowerCase())
+
+  const targetDevice = DEVICES.filter(device =>
+    readableDeviceName(device).toLowerCase().match(targetRe)
+  )
+
+  if (targetDevice.length === 0) {
+    console.log('no such device known')
+    process.exit(3)
   }
+  else if (targetDevice.length > 1) {
+    console.log('multiple devices matched:')
+    console.log(targetDevice
+      .map(spec =>
+        `  * ${readableDeviceName(spec)}`
+      )
+      .join('\n')
+    )
+    process.exit(4)
+  }
+
+  return targetDevice[0]
 }
-
-const target = process.argv[2]
-
-if (target && !DEVICES[target]) {
-  console.log('no such device known')
-  process.exit(3)
-}
-
-const onerror = (err) => {
-  console.log(err)
-  process.exit(1)
-}
-
 
 const writeCommand = (kbd, command) => {
   const bytes = commandToBytes(command)
@@ -44,10 +51,18 @@ const writeCommand = (kbd, command) => {
   return bytes
 }
 
+const onerror = (err) => {
+  console.log(err)
+  process.exit(1)
+}
+
+const targetSpec = process.argv[2] 
+const target = targetSpec && getTargetDevice(targetSpec)
+
 const device = devices.find(d =>
   (target ?
-    (d.vendorId === DEVICES[target].vendorId &&
-    d.productId === DEVICES[target].productId) : true)
+    (d.vendorId === target.VENDOR_ID &&
+    d.productId === target.PRODUCT_ID) : true)
   &&
     d.usage === DEFAULT_USAGE.usage &&
     d.usagePage === DEFAULT_USAGE.usagePage
@@ -55,14 +70,15 @@ const device = devices.find(d =>
 
 if (!device) {
   console.error('device not found (is the device connected? is raw HID enabled?)')
+  console.error('following devices were detected:')
   console.log(devices)
   process.exit(2)
 }
 
-console.log('device found', device)
-
 const kbd = new HID.HID(device.path)
 kbd.on('error', onerror)
+
+console.log(`connected to ${device.manufacturer} ${device.product}`)
 
 const server = http.createServer((req, res) => {
   if (req.method !== 'POST' || req.url !== '/command') {
