@@ -18,7 +18,7 @@ const commandToBytes = exports.commandToBytes = (command) => {
     0, id,
     ...lengthToBytes(data ? data.length : 0),
     ...(data ? dataToBytes(data) : [])
-  ]
-  const padding = new Array(PACKET_PADDING - unpadded.length).fill(0)
+  ];
+  const padding = new Array(PACKET_PADDING - (unpadded.length % PACKET_PADDING)).fill(0)
   return [ ...unpadded, ...padding ]
 }
