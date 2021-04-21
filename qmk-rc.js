@@ -3,7 +3,7 @@ const PACKET_PADDING = 64
 const dataToBytes = (data) => typeof data === 'string' ?
   strToBytes(data) : data;
 
-const strToBytes = (str) => str.split('').map(c => c.charCodeAt(0))
+const strToBytes = (str) => [...str.split('').map(c => c.charCodeAt(0)), 0]
 
 const lengthToBytes = (length) => {
   const lengthBuffer = new ArrayBuffer(4)
