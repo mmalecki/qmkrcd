@@ -14,10 +14,11 @@ const lengthToBytes = (length) => {
 
 const commandToBytes = exports.commandToBytes = (command) => {
   const { id, data } = command
+  const bytes = data ? dataToBytes(data) : []
   const unpadded = [
     0, id,
-    ...lengthToBytes(data ? data.length : 0),
-    ...(data ? dataToBytes(data) : [])
+    ...lengthToBytes(bytes.length),
+    ...bytes
   ];
   const padding = new Array(PACKET_PADDING - (unpadded.length % PACKET_PADDING)).fill(0)
   return [ ...unpadded, ...padding ]
