@@ -5,7 +5,8 @@
   "dependencies": {
     "body": "^5.1.0",
     "node-hid": "^2.1.1",
-    "send-data": "^8.0.0"
+    "send-data": "^8.0.0",
+    "yargs": "^17.0.1"
   },
   "bin": {
     "qmkrcd": "bin/qmkrcd"

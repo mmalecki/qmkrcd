@@ -1,12 +1,26 @@
 #!/usr/bin/env node
 'use strict'
 
+const yargs = require('yargs/yargs')
 const { commandToBytes } = require('../qmk-rc.js')
 const http = require('http')
 const HID = require('node-hid');
 const jsonBody = require('body/json')
 const sendJson = require('send-data/json')
 const DEVICES = require('../devices')
+
+const argv = yargs(process.argv.slice(2))
+  .option('host', {
+    alias: 'h',
+    description: 'Host to listen on',
+    'default': '127.0.0.1',
+  })
+  .option('port', {
+    alias: 'p',
+    description: 'Port to listen on',
+    'default': 9916,
+  })
+  .argv
 
 var devices = HID.devices();
 
@@ -111,4 +125,8 @@ const server = http.createServer((req, res) => {
     })
   })
 })
-server.listen(9916)
+
+server.listen(argv.port, argv.host, (err) => {
+  if (err) throw err
+  console.log(`listening on port ${server.address().port}`)
+})
