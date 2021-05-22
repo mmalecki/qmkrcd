@@ -5,7 +5,7 @@ const dataToBytes = (data) => typeof data === 'string' ?
 
 const strToBytes = (str) => [...str.split('').map(c => c.charCodeAt(0)), 0]
 
-const lengthToBytes = (length) => {
+const lengthToBytes = exports.lengthToBytes = (length) => {
   const lengthBuffer = new ArrayBuffer(4)
   const lengthDataView = new DataView(lengthBuffer)
   lengthDataView.setUint32(0, length, true)
